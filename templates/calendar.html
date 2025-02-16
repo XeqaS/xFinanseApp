@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Kalendarz - Moje Finanse{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Kalendarz transakcji</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Poniedziałek</th>
+                                    <th>Wtorek</th>
+                                    <th>Środa</th>
+                                    <th>Czwartek</th>
+                                    <th>Piątek</th>
+                                    <th>Sobota</th>
+                                    <th>Niedziela</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for week in range(6) %}
+                                <tr style="height: 120px;">
+                                    {% for day in range(7) %}
+                                    <td class="position-relative">
+                                        {% set current_date = (current_month + '-' + ((week * 7 + day + 1)|string).zfill(2)) %}
+                                        {% if current_date in transactions_by_date %}
+                                            {% for transaction in transactions_by_date[current_date] %}
+                                            <div class="mb-1">
+                                                <span class="badge {% if transaction.transaction_type == 'inflow' %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {{ transaction.amount }} PLN
+                                                </span>
+                                                <small>{{ transaction.category }}</small>
+                                            </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

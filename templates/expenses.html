@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Wydatki - Moje Finanse{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2>Lista wydatków</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Kwota</th>
+                        <th>Kategoria</th>
+                        <th>Opis</th>
+                        <th>Konto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ "%.2f"|format(expense.amount) }} PLN</td>
+                        <td>{{ expense.category }}</td>
+                        <td>{{ expense.description }}</td>
+                        <td>{{ expense.account.name }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Konta - Moje Finanse{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Lista kont -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Lista kont</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nazwa konta</th>
+                                    <th>Saldo</th>
+                                    <th>Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in accounts %}
+                                <tr>
+                                    <td>{{ account.name }}</td>
+                                    <td>{{ "%.2f"|format(account.balance) }} PLN</td>
+                                    <td>
+                                        <button class="btn btn-warning btn-sm edit-account-btn" 
+                                            data-id="{{ account.id }}"
+                                            data-name="{{ account.name }}"
+                                            data-balance="{{ account.balance }}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editAccountModal">
+                                            Edytuj
+                                        </button>
+                                        <button class="btn btn-danger btn-sm delete-account-btn"
+                                            data-id="{{ account.id }}"
+                                            data-name="{{ account.name }}">
+                                            Usuń
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <!-- Wiersz podsumowania -->
+                                <tr class="table-info fw-bold">
+                                    <td>SUMA</td>
+                                    <td>{{ "%.2f"|format(total_balance) }} PLN</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formularz dodawania nowego konta -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Dodaj nowe konto</h3>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('accounts.add_account') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nazwa konta</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="initial_balance" class="form-label">Saldo początkowe</label>
+                            <input type="number" step="0.01" class="form-control" id="initial_balance" name="initial_balance" value="0.00">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Dodaj konto</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal do edycji konta -->
+<div class="modal fade" id="editAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj konto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAccountForm">
+                    <input type="hidden" id="edit_account_id" name="account_id">
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Nazwa konta</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_balance" class="form-label">Saldo</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_balance" name="balance" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-primary" id="saveEditAccountButton">Zapisz zmiany</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Obsługa przycisku edycji konta
+    const editButtons = document.querySelectorAll('.edit-account-btn');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const data = this.dataset;
+            document.getElementById('edit_account_id').value = data.id;
+            document.getElementById('edit_name').value = data.name;
+            document.getElementById('edit_balance').value = data.balance;
+        });
+    });
+
+    // Obsługa przycisku usuwania konta
+    const deleteButtons = document.querySelectorAll('.delete-account-btn');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const accountId = this.dataset.id;
+            const accountName = this.dataset.name;
+            if (confirm(`Czy na pewno chcesz usunąć konto "${accountName}"? Wszystkie powiązane transakcje również zostaną usunięte.`)) {
+                window.location.href = `/accounts/delete/${accountId}`;
+            }
+        });
+    });
+
+    // Obsługa zapisu zmian
+    document.getElementById('saveEditAccountButton').addEventListener('click', function() {
+        const form = document.getElementById('editAccountForm');
+        const formData = new FormData(form);
+        const accountId = document.getElementById('edit_account_id').value;
+
+        fetch(`/accounts/edit/${accountId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.reload();
+            } else {
+                alert('Wystąpił błąd podczas zapisywania zmian: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Wystąpił błąd podczas zapisywania zmian: ' + error);
+        });
+    });
+});
+</script>
+{% endblock %}

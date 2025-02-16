@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Moje Finanse{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Witaj w aplikacji finansowej</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Wybierz jedną z opcji w menu, aby rozpocząć zarządzanie swoimi finansami.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('transactions.transactions') }}" class="btn btn-primary">Przejdź do transakcji</a>
+                        <a href="{{ url_for('accounts.accounts') }}" class="btn btn-secondary">Zarządzaj kontami</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

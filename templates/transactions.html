@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Transakcje - Moje Finanse{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2>Lista transakcji</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Kwota</th>
+                        <th>Kategoria</th>
+                        <th>Typ</th>
+                        <th>Opis</th>
+                        <th>Konto</th>
+                        <th>Stan konta</th>
+                        <th>Akcja</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td>{{ transaction.date }}</td>
+                        <td>{{ transaction.amount }} PLN</td>
+                        <td>{{ transaction.category }}</td>
+                        <td>
+                            {% if transaction.transaction_type == "inflow" %}
+                                <span class="badge bg-success">Wpływ</span>
+                            {% elif transaction.transaction_type == "outflow" %}
+                                <span class="badge bg-danger">Wydatek</span>
+                            {% elif transaction.transaction_type == "transfer" %}
+                                <span class="badge bg-warning">Przepływ</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Nieznany</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ transaction.description }}</td>
+                        <td>{{ transaction.account_name }}</td>
+                        <td>{{ transaction.balance }} PLN</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm edit-btn" 
+                                data-id="{{ transaction.id }}"
+                                data-date="{{ transaction.date }}"
+                                data-amount="{{ transaction.amount }}"
+                                data-category="{{ transaction.category }}"
+                                data-type="{{ transaction.transaction_type }}"
+                                data-description="{{ transaction.description }}"
+                                data-account="{{ transaction.account_id }}"
+                                data-bs-toggle="modal" data-bs-target="#editTransactionModal">
+                                Edytuj
+                            </button>
+                            <a href="{{ url_for('transactions.delete_transaction', transaction_id=transaction.id) }}" 
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Czy na pewno chcesz usunąć tę transakcję?')">
+                                Usuń
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Dodaj nową transakcję</h3>
+                </div>
+                <div class="card-body">
+                    <form id="addTransactionForm" action="{{ url_for('transactions.add_transaction') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="date" class="form-label">Data:</label>
+                            <input type="date" name="date" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Kwota:</label>
+                            <input type="number" step="0.01" name="amount" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Kategoria:</label>
+                            <select name="category" class="form-control">
+                                <option value="Pensja">Pensja</option>
+                                <option value="Dodatkowy dochód">Dodatkowy dochód</option>
+                                <option value="Jedzenie">Jedzenie</option>
+                                <option value="Rachunki">Rachunki</option>
+                                <option value="Transport">Transport</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transaction_type" class="form-label">Typ transakcji:</label>
+                            <select name="transaction_type" id="transaction_type" class="form-control">
+                                <option value="inflow">Wpływ</option>
+                                <option value="outflow">Wydatek</option>
+                                <option value="transfer">Przepływ</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Opis:</label>
+                            <input type="text" name="description" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="account_id" class="form-label">Wybierz konto:</label>
+                            <select name="account_id" class="form-control">
+                                {% for account in accounts %}
+                                    <option value="{{ account.id }}">{{ account.name }} ({{ account.balance }} PLN)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Dodaj transakcję</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal do edycji transakcji -->
+<div class="modal fade" id="editTransactionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj transakcję</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTransactionForm">
+                    <input type="hidden" id="edit_transaction_id" name="transaction_id">
+                    <div class="mb-3">
+                        <label for="edit_date" class="form-label">Data:</label>
+                        <input type="date" id="edit_date" name="date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_amount" class="form-label">Kwota:</label>
+                        <input type="number" step="0.01" id="edit_amount" name="amount" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_category" class="form-label">Kategoria:</label>
+                        <select id="edit_category" name="category" class="form-control">
+                            <option value="Pensja">Pensja</option>
+                            <option value="Dodatkowy dochód">Dodatkowy dochód</option>
+                            <option value="Jedzenie">Jedzenie</option>
+                            <option value="Rachunki">Rachunki</option>
+                            <option value="Transport">Transport</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Opis:</label>
+                        <input type="text" id="edit_description" name="description" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-primary" id="saveEditButton">Zapisz zmiany</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Obsługa przycisku edycji
+    const editButtons = document.querySelectorAll('.edit-btn');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const data = this.dataset;
+            document.getElementById('edit_transaction_id').value = data.id;
+            document.getElementById('edit_date').value = data.date;
+            document.getElementById('edit_amount').value = data.amount;
+            document.getElementById('edit_category').value = data.category;
+            document.getElementById('edit_description').value = data.description;
+        });
+    });
+
+    // Obsługa zapisu zmian
+    document.getElementById('saveEditButton').addEventListener('click', function() {
+        const form = document.getElementById('editTransactionForm');
+        const formData = new FormData(form);
+        const transactionId = document.getElementById('edit_transaction_id').value;
+
+        fetch(`{{ url_for('transactions.edit_transaction', transaction_id=0) }}`.replace('0', transactionId), {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editTransactionModal'));
+                modal.hide();
+                window.location.reload();
+            } else {
+                alert('Wystąpił błąd podczas zapisywania zmian: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Wystąpił błąd podczas zapisywania zmian: ' + error);
+        });
+    });
+});
+</script>
+{% endblock %}
